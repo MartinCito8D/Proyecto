@@ -7,6 +7,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
+
+#holaaa
 app = Flask(__name__)
 CORS(app)  # Desbloquea restricciones de seguridad del navegador (CORS)
 
