@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreditGuard - ML Dashboard</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">🛡️ CreditGuard</div>
+            <nav>
+                <a href="#" class="nav-link active" onclick="cambiarPestana('carga')">Carga y Entrenamiento</a>
+                <a href="#" class="nav-link" onclick="cambiarPestana('rendimiento')">Evaluación de Rendimiento</a>
+                <a href="#" class="nav-link" onclick="cambiarPestana('hiperparametros')">Ajuste de Hiperparámetros</a>
+                <a href="#" class="nav-link" onclick="cambiarPestana('predicciones')">Predicciones</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            
+            <section id="vista-carga" class="tab-content">
+                <h2>Carga y Entrenamiento</h2>
+                <p class="subtitle">Sube los archivos históricos y entrena el modelo base</p>
+                
+                <div class="card">
+                    <h3>Carga masiva de datos</h3>
+                    <p class="step">Paso 1: Seleccionar archivo fuente</p>
+                    <input type="file" id="csvFile" accept=".csv, text/csv, text/plain" style="display:none">
+                    <button class="btn-secondary" onclick="document.getElementById('csvFile').click()">Seleccionar archivo CSV / TXT</button>
+                    <p id="fileNameDisplay" class="info-text">Ningún archivo seleccionado</p>
+                </div>
+
+                <div class="card">
+                    <h3>Preprocesamiento</h3>
+                    <p class="step">Paso 2: Limpieza automática de datos (Pandas)</p>
+                    <button id="btnLimpiar" class="btn-primary" disabled onclick="subirYLimpiar()">Limpiar Datos</button>
+                    <div id="alertLimpieza" class="alert alert-success hidden"></div>
+                </div>
+
+                <div class="card">
+                    <h3>Entrenamiento</h3>
+                    <p class="step">Paso 3: Ejecutar entrenamiento del modelo base</p>
+                    <button id="btnEntrenarBase" class="btn-primary" disabled onclick="entrenarModeloBase()">Entrenar Modelo</button>
+                    <div id="alertEntrenamiento" class="alert alert-success hidden">✔️ Modelo base entrenado con éxito. ¡Métricas listas en el panel!</div>
+                </div>
+            </section>
+
+            <section id="vista-rendimiento" class="tab-content hidden">
+                <h2>Evaluación de Rendimiento</h2>
+                <p class="subtitle">Métricas globales obtenidas a partir del conjunto de prueba</p>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card"><h5>Exactitud (Accuracy)</h5><h1 id="m-accuracy">-</h1></div>
+                    <div class="metric-card"><h5>Precisión (Precision)</h5><h1 id="m-precision">-</h1></div>
+                    <div class="metric-card"><h5>Exhaustividad (Recall)</h5><h1 id="m-recall">-</h1></div>
+                    <div class="metric-card"><h5>Puntuación F1 (F1-Score)</h5><h1 id="m-f1">-</h1></div>
+                </div>
+
+                <div class="grid-2-col">
+                    <div class="card">
+                        <h3>Matriz de Confusión</h3>
+                        <table class="matrix-table">
+                            <tr>
+                                <td></td>
+                                <th style="color:#2563eb">Predicho: Sin Riesgo</th>
+                                <th style="color:#ef4444">Predicho: En Riesgo</th>
+                            </tr>
+                            <tr>
+                                <th>Real: Sin Riesgo</th>
+                                <td id="cell-tn" class="bold">-</td>
+                                <td id="cell-fp">-</td>
+                            </tr>
+                            <tr>
+                                <th>Real: En Riesgo</th>
+                                <td id="cell-fn">-</td>
+                                <td id="cell-tp" class="bold">-</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <h3>Distribución de Resultados</h3>
+                        <p class="info-text">Porcentaje de clientes según las predicciones finales:</p>
+                        <div class="distribution-box">
+                            <p>🟢 Sin Riesgo Detectado: <strong id="dist-sin">-</strong></p>
+                            <p>🔴 En Riesgo Total: <strong id="dist-con">-</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="vista-hiperparametros" class="tab-content hidden">
+                <h2>Ajuste de Hiperparámetros</h2>
+                <p class="subtitle">Modifica la estructura del árbol para reentrenar y comparar los resultados</p>
+                
+                <div class="card row-inputs">
+                    <div>
+                        <label>Cantidad de Árboles:</label>
+                        <input type="number" id="param-estimators" value="100">
+                    </div>
+                    <div>
+                        <label>Profundidad Máxima:</label>
+                        <input type="number" id="param-depth" value="10">
+                    </div>
+                    <div>
+                        <label>Máximo Nodos Hoja:</label>
+                        <input type="number" id="param-leaves" value="50">
+                    </div>
+                    <button class="btn-primary" style="margin-top:22px;" onclick="reentrenarHiperparametros()">Reentrenar</button>
+                </div>
+
+                <div class="card">
+                    <h3>Comparativa de Modelos</h3>
+                    <table class="compare-table">
+                        <thead>
+                            <tr>
+                                <th>Métrica</th>
+                                <th>Modelo Inicial</th>
+                                <th>Modelo Modificado</th>
+                                <th>Diferencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Accuracy</td><td id="c-acc-ant">-</td><td id="c-acc-des">-</td><td id="c-acc-dif">-</td></tr>
+                            <tr><td>Precision</td><td id="c-pre-ant">-</td><td id="c-pre-des">-</td><td id="c-pre-dif">-</td></tr>
+                            <tr><td>Recall</td><td id="c-rec-ant">-</td><td id="c-rec-des">-</td><td id="c-rec-dif">-</td></tr>
+                            <tr><td>F1-Score</td><td id="c-f1-ant">-</td><td id="c-f1-des">-</td><td id="c-f1-dif">-</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="vista-predicciones" class="tab-content hidden">
+                <h2>Predicción Individual de Crédito</h2>
+                <p class="subtitle">Ingresa los datos del aplicante para evaluar el riesgo de impago en tiempo real</p>
+                
+                <form id="formPredict" onsubmit="predecirIndividual(event)" class="card form-grid">
+                    <div class="form-group"><label>Ingresos Mensuales ($):</label><input type="number" step="any" id="f-ingresos" required></div>
+                    <div class="form-group"><label>Deuda Activa ($):</label><input type="number" step="any" id="f-deuda" required></div>
+                    <div class="form-group"><label>Historial de Pagos (0-100):</label><input type="number" step="any" id="f-historial" required></div>
+                    <div class="form-group"><label>Antigüedad Laboral (Años):</label><input type="number" step="any" id="f-antiguedad" required></div>
+                    <div class="form-group"><label>Créditos Activos:</label><input type="number" id="f-creditos" required></div>
+                    <div class="form-group"><label>Monto Solicitado ($):</label><input type="number" step="any" id="f-monto" required></div>
+                    <div class="form-group"><label>Atrasos Previos:</label><input type="number" id="f-atrasos" required></div>
+                    <div class="form-group"><label>Dependientes Económicos:</label><input type="number" id="f-dependientes" required></div>
+                    <div class="form-group"><label>Utilización de Crédito (%):</label><input type="number" step="any" id="f-utilizacion" required></div>
+                    
+                    <button type="submit" class="btn-primary" style="grid-column: span 3; margin-top:15px;">Realizar Predicción</button>
+                </form>
+
+                <div id="resultBox" class="result-box hidden">
+                    <h3>Resultado del Análisis</h3>
+                    <h2 id="resultText"></h2>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+</html>
